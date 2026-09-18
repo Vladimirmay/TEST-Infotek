@@ -41,3 +41,15 @@ export interface BookFormData {
   author_ids: number[]
   cover?: File | null
 }
+
+/**
+ * Not part of book.yaml — a frontend-side extension for the guest subscription/SMS
+ * bonus requirement. See CLAUDE.md "Gaps between the spec and the assignment description".
+ */
+export interface SubscribeRequest {
+  phone: string
+}
+
+export interface SubscribeResponse {
+  success: boolean
+}

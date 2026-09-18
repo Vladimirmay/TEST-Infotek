@@ -78,6 +78,8 @@ async function onDelete() {
         </li>
       </ul>
       <p v-else class="mt-3 text-sm text-slate-500">У автора пока нет книг в каталоге.</p>
+
+      <AuthorSubscribeForm v-if="!auth.isAuthenticated" class="mt-8 max-w-md" :author-id="id" />
     </div>
   </div>
 </template>
