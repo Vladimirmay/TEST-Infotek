@@ -1,5 +1,7 @@
 <script setup lang="ts">
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 const booksApi = useBooksApi()
 const id = computed(() => Number(route.params.id))
 
@@ -10,6 +12,25 @@ const { data: book, pending, error } = await useAsyncData(
 )
 
 useHead({ title: () => book.value?.title ?? 'Книга' })
+
+const deleting = ref(false)
+const deleteError = ref('')
+
+async function onDelete() {
+  if (!book.value) return
+  if (!confirm(`Удалить книгу «${book.value.title}»?`)) return
+
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await booksApi.remove(id.value)
+    await router.push('/')
+  } catch (error) {
+    deleteError.value = toApiError(error).message
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <template>
@@ -65,6 +86,24 @@ useHead({ title: () => book.value?.title ?? 'Книга' })
         <p v-if="book.description" class="mt-4 whitespace-pre-line text-sm text-slate-700">
           {{ book.description }}
         </p>
+
+        <div v-if="auth.isAuthenticated" class="mt-6 flex gap-3">
+          <NuxtLink
+            :to="`/books/${id}/edit`"
+            class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50"
+          >
+            Редактировать
+          </NuxtLink>
+          <button
+            type="button"
+            :disabled="deleting"
+            class="rounded-md border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+            @click="onDelete"
+          >
+            {{ deleting ? 'Удаляем...' : 'Удалить' }}
+          </button>
+        </div>
+        <p v-if="deleteError" class="mt-2 text-sm text-red-600">{{ deleteError }}</p>
       </div>
     </div>
   </div>

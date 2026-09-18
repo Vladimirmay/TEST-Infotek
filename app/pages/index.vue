@@ -1,6 +1,7 @@
 <script setup lang="ts">
 useHead({ title: 'Книги' })
 
+const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const booksApi = useBooksApi()
@@ -45,7 +46,16 @@ function goToPage(next: number) {
 
 <template>
   <div>
-    <h1 class="text-2xl font-semibold">Книги</h1>
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold">Книги</h1>
+      <NuxtLink
+        v-if="auth.isAuthenticated"
+        to="/books/new"
+        class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+      >
+        Добавить книгу
+      </NuxtLink>
+    </div>
 
     <form class="mt-4 flex flex-wrap items-end gap-3" @submit.prevent="applyFilters">
       <div>
