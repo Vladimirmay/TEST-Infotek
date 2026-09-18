@@ -1,75 +1,104 @@
-# Nuxt Minimal Starter
+# Каталог книг — фронтенд
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Фронтенд для API каталога книг (Yii2 + MySQL на бэкенде, спецификация — [book.yaml](book.yaml)).
+Два уровня доступа: гость (просмотр каталога, отчёт, подписка на новинки автора) и авторизованный
+пользователь (полный CRUD книг и авторов).
 
-## Setup
+## Стек
 
-Make sure to install dependencies:
+- Nuxt 4 / Vue 3 / TypeScript
+- Pinia — состояние авторизации
+- Tailwind CSS
+- ESLint (`@nuxt/eslint`)
+- Типы API генерируются из `book.yaml` через `openapi-typescript`
+
+## Быстрый старт
 
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
+cp .env.example .env
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+Приложение поднимется на `http://localhost:3000`. По умолчанию `NUXT_PUBLIC_API_BASE=/api/v1`
+указывает на встроенный мок-сервер (см. ниже) — реального бэкенда для проекта не предоставлялось,
+поэтому мок нужен, чтобы приложение можно было запустить и предметно оценить.
 
-Build the application for production:
+Тестовый пользователь мок-сервера: **user** / **password**.
 
-```bash
-# npm
-npm run build
+Чтобы подключить настоящий Yii2-бэкенд вместо мока, укажите его адрес в `.env`:
 
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+```
+NUXT_PUBLIC_API_BASE=https://api.example.com/api/v1
 ```
 
-Locally preview production build:
+### Прочие команды
 
-```bash
-# npm
-npm run preview
+| Команда | Назначение |
+|---|---|
+| `npm run build` | Продакшен-сборка |
+| `npm run preview` | Локальный просмотр продакшен-сборки |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Проверка типов (vue-tsc) |
+| `npm run types:api` | Перегенерировать `app/types/api.ts` из `book.yaml` |
 
-# pnpm
-pnpm preview
+## Отклонения и расширения спецификации
 
-# yarn
-yarn preview
+`book.yaml` не покрывает часть требований из описания задания — эти места явно выделены ниже,
+а не спрятаны в коде.
 
-# bun
-bun run preview
+### Мок-сервер (`server/api/v1/**`)
+
+Готового бэкенда для этого фронтенда не было, поэтому весь контракт `book.yaml` продублирован
+мок-сервером на Nitro (server routes самого Nuxt) с in-memory хранилищем: список/карточка книг
+и авторов, CRUD, отчёт топ-10, логин с выдачей токена. Реализация нужна исключительно для того,
+чтобы приложение можно было полноценно запустить и прокликать локально — сравнивать её с реальным
+бэкендом не нужно, значение имеет только фронтенд-код в `app/`.
+
+**После перезапуска dev-сервера данные мок-сервера сбрасываются к исходному набору** — это
+in-memory хранилище, не база данных.
+
+### Подписка гостя на автора + SMS
+
+В задании есть бонусный пункт: гость подписывается на автора и получает SMS через smspilot.ru,
+когда у автора выходит новая книга. В `book.yaml` для этого нет ни одного эндпоинта — контракт
+придуман на стороне фронтенда:
+
+```
+POST /authors/{id}/subscribe
+Body: { "phone": "+7XXXXXXXXXX" }
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Реализовано:
+- форма подписки на странице автора (`AuthorSubscribeForm.vue`), видна только гостям;
+- на мок-сервере — при создании новой книги (`POST /books`) сервер ищет подписчиков её авторов и
+  отправляет им SMS через реальный API smspilot.ru (`server/utils/sms.ts`), используя ключ из
+  `SMSPILOT_API_KEY` в `.env` (переменная серверная, в клиентский бандл не попадает). Без ключа
+  сервер не падает — просто пишет в лог, что SMS не отправлено.
+
+### Создание/редактирование книги: `PUT` vs `PATCH`
+
+Спека требует обложку как обязательное поле формы (`BookForm`) и на `POST`, и на `PUT` — то есть
+дословно каждое редактирование книги требовало бы повторной загрузки файла. Чтобы не заставлять
+пользователя каждый раз выбирать файл заново, форма редактирования отправляет:
+- `PUT /books/{id}` (multipart, с новой обложкой) — если пользователь выбрал новый файл;
+- `PATCH /books/{id}` (JSON, без обложки) — если файл не менялся; `BookInput` в спеке как раз не
+  содержит поля обложки, так что это её штатное назначение.
+
+## Структура
+
+```
+app/
+  components/   переиспользуемые UI-компоненты
+  composables/  API-клиент (по одному файлу на ресурс) + вспомогательные composables
+  layouts/      общий layout с навигацией
+  middleware/   guard для приватных страниц
+  pages/        роуты
+  plugins/      $api — общий ofetch-инстанс с авторизацией
+  stores/       Pinia (авторизация)
+  types/        app/types/api.ts генерируется из book.yaml, index.ts — удобные алиасы
+  utils/        нормализация ошибок API
+server/
+  api/v1/       мок-сервер, повторяющий контракт book.yaml
+  utils/        in-memory БД, сериализация, авторизация, отправка SMS
+```
