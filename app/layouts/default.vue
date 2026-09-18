@@ -5,12 +5,12 @@ const auth = useAuthStore()
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900">
     <header class="border-b border-slate-200 bg-white">
-      <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <NuxtLink to="/" class="text-lg font-semibold">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+        <NuxtLink to="/" class="shrink-0 text-lg font-semibold">
           Каталог книг
         </NuxtLink>
 
-        <nav class="flex items-center gap-4 text-sm">
+        <nav class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
           <NuxtLink to="/" class="hover:text-blue-600">Книги</NuxtLink>
           <NuxtLink to="/authors" class="hover:text-blue-600">Авторы</NuxtLink>
           <NuxtLink to="/reports/top-authors" class="hover:text-blue-600">Топ авторов</NuxtLink>
