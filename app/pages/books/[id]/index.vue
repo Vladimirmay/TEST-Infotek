@@ -65,7 +65,7 @@ async function onDelete() {
         <p class="mt-1 text-slate-500">{{ book.year }}</p>
 
         <p class="mt-3 text-sm text-slate-600">
-          <span class="font-medium text-slate-700">Авторы:</span>
+          <span class="mr-1 font-medium text-slate-700">Авторы:</span>
           <template v-if="book.authors?.length">
             <NuxtLink
               v-for="(author, index) in book.authors"
