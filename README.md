@@ -15,6 +15,8 @@
 ## Быстрый старт
 
 ```bash
+git clone https://github.com/Vladimirmay/TEST-Infotek.git
+cd TEST-Infotek
 npm install
 cp .env.example .env
 npm run dev
